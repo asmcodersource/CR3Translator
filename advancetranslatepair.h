@@ -14,6 +14,7 @@
 #include <QDebug>
 #include <QObject>
 #include <iostream>
+#include <settingswidget.h>
 #include "translatepair.h"
 
 
@@ -26,9 +27,9 @@ class AdvanceTranslatePair: public TranslatePair{
     QNetworkRequest* request;
     QStringList capture_list, braced_capture_list, variable_capture_list;
     QString source_lang, target_lang;
-
+    QString translate_server_adrress;
 public:
-    AdvanceTranslatePair(QString key, QString value, QString lang_source = "en", QString lang_target = "uk");
+    AdvanceTranslatePair(QString key, QString value, TranslateSettings settings);
     ~AdvanceTranslatePair() = default;
     Pair getTranslatedPair() override;
     Pair getOriginalPair() override;

@@ -29,6 +29,11 @@ QMenuBar::item:selected {
     background-color: rgb(47, 51, 56);
 }
 
+QMenuBar::item:disabled {
+    background-color: rgb(43, 43, 43);
+    color: rgb(125, 127, 128);
+}
+
 QMenuBar::item:pressed {
     background-color: white;
     color: black;
@@ -53,10 +58,13 @@ MainWindow::MainWindow(QWidget* parent): QWidget(parent){
 
     menu_file = new QMenu(tr("Файл"));
 
-    QAction* action_open_dir = new QAction("Відкрити папку");
+    action_open_dir = new QAction("Відкрити папку");
     connect(action_open_dir, &QAction::triggered, this, [this](){
        static QFileDialog* file_dialog = new QFileDialog();
        file_dialog->setFileMode(QFileDialog::Directory);
+       file_dialog->setWindowTitle("Оберіть папку, з якою бажаєте працювати");
+       file_dialog->setLabelText(QFileDialog::DialogLabel::Accept, "Відкрити");
+       file_dialog->setLabelText(QFileDialog::DialogLabel::Reject, "Відміна");
        file_dialog->setOption(QFileDialog::ShowDirsOnly, true);
        file_dialog->show();
        connect(file_dialog, &QFileDialog::fileSelected, this, [this](QString dir_path){
@@ -65,9 +73,16 @@ MainWindow::MainWindow(QWidget* parent): QWidget(parent){
     });
     menu_file->addAction(action_open_dir);
 
-    QAction* action_open_file = new QAction("Відкрити файл");
+    action_open_file = new QAction("Відкрити файл");
     connect(action_open_file, &QAction::triggered, this, [this](){
        static QFileDialog* file_dialog = new QFileDialog();
+       file_dialog->setWindowTitle("Оберіть файл перекладу, з яким бажаєте працювати");
+       file_dialog->setFileMode(QFileDialog::ExistingFile);
+       file_dialog->setLabelText(QFileDialog::DialogLabel::Accept, "Відкрити");
+       file_dialog->setLabelText(QFileDialog::DialogLabel::Reject, "Відміна");
+       file_dialog->setLabelText(QFileDialog::DialogLabel::FileType, "Файли формату");
+       file_dialog->setLabelText(QFileDialog::DialogLabel::FileName, "Ім'я файлу");
+       file_dialog->setNameFilter("Файли формату YAML (*.yml)");
        file_dialog->show();
        connect(file_dialog, &QFileDialog::fileSelected, this, [this](QString file_name){
            main_widget->list_widget->loadFromFile(file_name);
@@ -75,13 +90,30 @@ MainWindow::MainWindow(QWidget* parent): QWidget(parent){
     });
     menu_file->addAction(action_open_file);
 
-    QAction* action_save = new QAction("Зберегти файл");
+    action_save = new QAction("Зберегти файл");
     connect(action_save, &QAction::triggered, this, [this](){
        main_widget->saveFile();
     });
     menu_file->addAction(action_save);
 
-    QAction* action_exit = new QAction("Закрити");
+    action_save_as = new QAction("Зберегти файл як...");
+    connect(action_save_as, &QAction::triggered, this, [this](){
+        static QFileDialog* file_dialog = new QFileDialog();
+        file_dialog->setWindowTitle("Зберегти як");
+        file_dialog->setLabelText(QFileDialog::DialogLabel::Accept, "Відкрити");
+        file_dialog->setLabelText(QFileDialog::DialogLabel::Reject, "Відміна");
+        file_dialog->setLabelText(QFileDialog::DialogLabel::FileType, "Файли формату");
+        file_dialog->setLabelText(QFileDialog::DialogLabel::FileName, "Ім'я файлу");
+        file_dialog->setNameFilter("Файли формату YAML (*.yml)");
+        file_dialog->show();
+        connect(file_dialog, &QFileDialog::fileSelected, this, [this](QString file_name){
+            main_widget->list_widget->saveToFile(file_name);
+        });
+       main_widget->saveFile();
+    });
+    menu_file->addAction(action_save_as);
+
+    action_exit = new QAction("Закрити");
     connect(action_exit, &QAction::triggered, this, [this](){
        QApplication::exit();
     });
@@ -89,17 +121,21 @@ MainWindow::MainWindow(QWidget* parent): QWidget(parent){
 
     menu_bar->addMenu(menu_file);
 
-    QAction* action_settings = new QAction("Налаштування");
+    action_settings = new QAction("Налаштування");
     connect( action_settings, &QAction::triggered, settings_widget, &QWidget::show);
     menu_bar->addAction(action_settings);
 
-    QAction* action_translate = new QAction("Перекласти поточний файл");
-    connect( action_translate, &QAction::triggered, main_widget->list_widget, &ListWidget::translateFile);
+    action_translate = new QAction("Перекласти поточний файл");
+    connect( action_translate, &QAction::triggered, this, [&, this](){
+        action_translate->setDisabled(true);
+        action_translate->setEnabled(false);
+        main_widget->list_widget->translateFile();
+    });
     menu_bar->addAction(action_translate);
 
 
-    QAction* about = new QAction("Про программу");
-    connect(about, &QAction::triggered, this, [this](){
+    action_about = new QAction("Про программу");
+    connect(action_about, &QAction::triggered, this, [this](){
         static QMessageBox* dialog = new QMessageBox(QMessageBox::Icon::NoIcon,
                                                      "Про программу CR3 Translator",
                                                      """Це программа для автоматизації перекладу модів ігри Crusader Kings 3."
@@ -110,10 +146,13 @@ MainWindow::MainWindow(QWidget* parent): QWidget(parent){
         dialog->setMinimumSize(300,200);
         dialog->show();
     });
-    menu_bar->addAction(about);
+    menu_bar->addAction(action_about);
 
     connect(main_widget->file_tree_widget, &FileTreeWidget::openFile, main_widget->list_widget, &ListWidget::loadFromFile);
-
+    connect(main_widget->list_widget, &ListWidget::signal_fileTranslated, this, [this](){
+        action_translate->setDisabled(false);
+        action_translate->setEnabled(true);
+    });
 
     setLayout(main_layout);
     main_layout->setSpacing(0);

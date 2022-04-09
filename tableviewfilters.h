@@ -9,6 +9,7 @@
 
 
 class ListWidgetBaseFilter: public QObject{
+
 protected:
     QTableView* table_view;
 
@@ -22,6 +23,8 @@ public:
 
 protected:
     bool isParent(QObject* child, QObject* parent);
+
+
 };
 
 class ListWidgetColumnResizeFilter: public ListWidgetBaseFilter{

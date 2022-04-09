@@ -81,6 +81,7 @@ private:
     MainWidget* main_widget;
     QMenuBar* menu_bar;
     QMenu* menu_file;
+    QAction* action_open_dir, *action_open_file, *action_save, *action_exit, *action_settings, *action_translate, *action_about, *action_save_as;
     bool top = false, down = false, left = false, right = false;
 public:
 

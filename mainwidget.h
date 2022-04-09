@@ -21,7 +21,7 @@ public:
     void setSettingsWidget(SettingsWidget* ptr);
 
 public slots:
-    void saveFile();
+    void saveFile(QString path = "null");
 signals:
 
 };

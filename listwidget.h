@@ -1,5 +1,6 @@
 #ifndef LISTWIDGET_H
 #define LISTWIDGET_H
+#include <mutex>
 #include <thread>
 #include <QWidget>
 #include <QLayout>
@@ -16,7 +17,7 @@
 #include "advancetranslatepair.h"
 #include "settingswidget.h"
 #include "tableviewfilters.h"
-
+#include "QDialog"
 
 /*
   Клас, що реалізовує представлення для даних.
@@ -34,6 +35,7 @@ class ListWidget : public QWidget
     QString opened_file;
     QString file_data;
     bool edited = false;
+    std::mutex lock_translate;
 
 public:
     ListWidget(QWidget *parent = nullptr);
@@ -42,9 +44,12 @@ public:
     void translateFile();
     void resizeEvent(QResizeEvent* event);
     void loadFromFile(QString file_path);
-    void saveToFile();
+    void saveToFile(QString path = "null");
 
     void setSettingsWidget(SettingsWidget* ptr);
+
+signals:
+    void signal_fileTranslated();
 };
 
 

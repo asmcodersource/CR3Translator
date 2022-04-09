@@ -9,8 +9,8 @@ MainWidget::MainWidget(QWidget *parent): QSplitter{parent}{
     setStretchFactor(0, 3);
 }
 
-void MainWidget::saveFile(){
-    list_widget->saveToFile();
+void MainWidget::saveFile(QString path){
+    list_widget->saveToFile(path);
 }
 
 void MainWidget::setSettingsWidget(SettingsWidget* ptr){

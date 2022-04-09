@@ -1,9 +1,10 @@
 #include "advancetranslatepair.h"
 using namespace std;
 
-AdvanceTranslatePair::AdvanceTranslatePair(QString key, QString value, QString lang_source, QString lang_target){
-    source_lang = lang_source;
-    target_lang = lang_target;
+AdvanceTranslatePair::AdvanceTranslatePair(QString key, QString value, TranslateSettings settings){
+    source_lang = settings.lang_source;
+    target_lang = settings.lang_target;
+    translate_server_adrress = settings.translate_server;
     network = new  QNetworkAccessManager();
     request = new QNetworkRequest();
     original_pair.key = key;
@@ -52,7 +53,7 @@ void AdvanceTranslatePair::makeTranslate(){
     for( auto& element: capture_list ){
         stringForTranslate.replace(element, "()");
     }
-    QString ulr_string = "https://lingva.pussthecat.org/api/v1/" + source_lang + "/" + target_lang;
+    QString ulr_string = "https://" + translate_server_adrress + "/api/v1/" + source_lang + "/" + target_lang;
     QUrlQuery url_query;
     url_query.addQueryItem("", QUrl::toPercentEncoding(stringForTranslate));
     ulr_string = ulr_string + "/" + url_query.toString().right(url_query.toString().length() - 1);

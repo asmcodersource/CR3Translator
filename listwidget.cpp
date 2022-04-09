@@ -83,11 +83,24 @@ ListWidget::~ListWidget(){
 
 //  Метод загрузки данних із файлу
 void ListWidget::loadFromFile(QString file_path){
+    // Якщо поточний файл був редагований, повідомляємо
+    if( this->edited == true ){
+        QMessageBox msgBox;
+        msgBox.setText("Відкриття нового файлу");
+        msgBox.setInformativeText("Файл було змінено, при відкриттті нового файлу, зміни буде встрачено. Бажаєте збергти файл?");
+        msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Cancel | QMessageBox::Ignore);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+        int ret = msgBox.exec();
+        if( ret == QMessageBox::Cancel )
+            return;
+        if( ret == QMessageBox::Save )
+            this->saveToFile();
+    }
     // Визначення формату файлу.
     if( file_path.right(3) != "yml" ){
         // Помилка.
         static QMessageBox* dialog = new QMessageBox(QMessageBox::Icon::Critical,"Помилка", "Файл не відповідає формату YML.");
-        dialog->setMinimumSize(300,200);
+        dialog->setMinimumSize(300,100);
         dialog->show();
         return;
     }
@@ -155,16 +168,27 @@ void ListWidget::setSettingsWidget(SettingsWidget* ptr){
 }
 
 // Метод збереження даних у файл
-void ListWidget::saveToFile(){
+void ListWidget::saveToFile(QString path ){
+    auto settings = settings_widget->getSettings();
+    if( settings.auto_change_file_name && path == "null"){
+        opened_file.replace(settings.lang_key_source, settings.lang_key_target);
+    }
+    if( path != "null" ){
+        opened_file = path;
+    }
     // Відкриття файлу
     QFile file(opened_file, this);
-    file.open(QIODevice::WriteOnly | QIODevice::Text);
+    file.open(QIODevice::Truncate | QIODevice::WriteOnly | QIODevice::Text);
 
     // Заміна значеннь оригінальних, на переклажені
     QString result;
     result = file_data;
     for( int32_t i = 0; i < model->rowCount(); i++ ){
         result.replace(model->data(model->index(i, 1)).toString(), model->data(model->index(i, 2)).toString());
+    }
+
+    if( settings.auto_change_lang_key ){
+        result.replace(settings.lang_key_source, settings.lang_key_target);
     }
 
     // Перекодування у формат UTF-8, запис у файл
@@ -176,6 +200,7 @@ void ListWidget::saveToFile(){
 
     // Закриття файлу
     file.close();
+    edited = false;
 }
 
 // Перевизначений метод реагування на зміни розміру
@@ -192,10 +217,23 @@ void ListWidget::resizeEvent(QResizeEvent* event){
 
 // Метод що перекладає відкритий файл
 void ListWidget::translateFile(){
+    if( model->rowCount() == 0 ){
+         static QMessageBox* error = new QMessageBox(QMessageBox::Icon::NoIcon, "Помилка перекладу", "Не знайдено пар ключ-значення");
+         emit signal_fileTranslated();
+         error->show();
+         return;
+    }
+
+    if( !lock_translate.try_lock() ){
+        qDebug() << "Previous translate dont finished.";
+        return;
+    }
+
+    edited = true;
     // Статичне створення списку вказівників на об'єкти перекладу, та їх очищенання
     static std::list<AdvanceTranslatePair*> pairs;
     pairs.clear();
-
+    auto settings = settings_widget->getSettings();
     static int32_t completed_translate;
     completed_translate = 0;
     for( int32_t i = 0; i < model->rowCount(); i++ ){
@@ -203,8 +241,7 @@ void ListWidget::translateFile(){
             std::this_thread::yield(); // Якщо переклад наступних десяти не здійснено, перемикаєм потік
         // Створення нового об'єкту перекладу, якому передається наступка пара ключа, та значення
         AdvanceTranslatePair* pair_ptr = new AdvanceTranslatePair(model->data(model->index(i, 0)).toString(), model->data(model->index(i, 1)).toString(),
-                                                                  settings_widget->getSourceLang(),
-                                                                  settings_widget->getTargetLang());
+                                                                  settings);
         // збережнення вказівника на цей об'єкт
         pairs.push_back(pair_ptr);
         // З'єднання сигналу "переклад закінчено", із лямба-функцією, що отримує перекладені значення, та зберігає результати
@@ -215,6 +252,11 @@ void ListWidget::translateFile(){
              int32_t row = std::distance(pairs.begin(), iter_this_pair);
              model->setData(model->index(row, 2), pair_values.value);
              completed_translate++;
+
+             if( completed_translate == model->rowCount()){
+                 emit signal_fileTranslated();
+                 lock_translate.unlock();
+             }
         });
 
         // викликання методу, що провокує початок перекладу пари

@@ -106,7 +106,7 @@ void ListWidget::loadFromFile(QString file_path){
     }
     // Зчитування файлу
     opened_file = file_path;
-    QFile file(file_path, this);
+    QFile file(file_path);
     file.open(QIODevice::ReadOnly);
     file_data = file.readAll();
     file.close();
@@ -177,7 +177,7 @@ void ListWidget::saveToFile(QString path ){
         opened_file = path;
     }
     // Відкриття файлу
-    QFile file(opened_file, this);
+    QFile file(opened_file);
     file.open(QIODevice::Truncate | QIODevice::WriteOnly | QIODevice::Text);
 
     // Заміна значеннь оригінальних, на переклажені
@@ -193,14 +193,18 @@ void ListWidget::saveToFile(QString path ){
 
     // Перекодування у формат UTF-8, запис у файл
     QTextStream streamFileOut(&file);
-    streamFileOut.setCodec("UTF-8");
+    auto converter = QStringConverter::encodingForName("UTF-8");
+    streamFileOut.setEncoding(QStringConverter::Encoding::Utf8);
     streamFileOut.setGenerateByteOrderMark(true);
-    streamFileOut << result;
-    streamFileOut.flush();
 
-    // Закриття файлу
+    // Write the result to the file
+    streamFileOut << result;
+
+    // Flush and close the file
+    streamFileOut.flush();
     file.close();
-    edited = false;
+
+    bool edited = false;
 }
 
 // Перевизначений метод реагування на зміни розміру

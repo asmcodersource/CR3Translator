@@ -18,7 +18,8 @@ SOURCES += \
     scrollbar.cpp \
     settingswidget.cpp \
     tableviewfilters.cpp \
-    translatepair.cpp
+    translatepair.cpp \
+    translationcontroller.cpp
 
 HEADERS += \
     advancetranslatepair.h \
@@ -29,7 +30,8 @@ HEADERS += \
     scrollbar.h \
     settingswidget.h \
     tableviewfilters.h \
-    translatepair.h
+    translatepair.h \
+    translationcontroller.h
 
 CONFIG += lrelease
 

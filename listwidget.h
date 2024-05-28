@@ -18,6 +18,7 @@
 #include "settingswidget.h"
 #include "tableviewfilters.h"
 #include "QDialog"
+#include <QFile>
 
 /*
   Клас, що реалізовує представлення для даних.

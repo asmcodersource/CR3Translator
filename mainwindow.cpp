@@ -297,10 +297,17 @@ void WindowTitle::setMainWindow(QWidget *main_window){
 void WindowTitle::mousePressEvent(QMouseEvent* event){
     left_button_pressed = true;
     first_press = QCursor().pos();
+    first_pos = main_window->pos();
+    double x_press = static_cast<double>(QCursor().pos().x()) / main_window->width();
 
     //qobject_cast<MainWindow*>(main_window)->slot_maximazeButtonClicked();
-    main_window->showNormal();
-    first_pos = main_window->pos();
+    if( main_window->isMaximized() ){
+        main_window->showNormal();
+        WindowTitle::button_maximaze.button_type = buttonType::maximize;
+        first_pos = QCursor::pos() - QPoint( main_window->width() * x_press, 5);
+        main_window->move(first_pos - (first_press - QCursor().pos()));
+    }
+
 }
 
 void WindowTitle::mouseReleaseEvent(QMouseEvent* event){

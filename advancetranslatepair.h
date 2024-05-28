@@ -2,7 +2,7 @@
 #define AdvanceTranslatePair_H
 
 #include <QMainWindow>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QRegularExpressionMatchIterator>
 #include <QtNetwork\QNetworkAccessManager>
 #include <QtNetwork\QNetworkRequest>

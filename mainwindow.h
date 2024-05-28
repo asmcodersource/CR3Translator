@@ -19,6 +19,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QCursor>
 #include "mainwidget.h"
 #include "settingswidget.h"
 using namespace std;
